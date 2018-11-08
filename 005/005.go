@@ -8,7 +8,9 @@ import (
 	"time"
 )
 
-func request(countError *int, needTime int, address string, wg *sync.WaitGroup, tmp *time.Duration) {
+var mass []time.Duration
+
+func request(countError *int, needTime int, address string, wg *sync.WaitGroup) {
 
 	tBegin := time.Now()
 	client := http.Client{
@@ -24,7 +26,7 @@ func request(countError *int, needTime int, address string, wg *sync.WaitGroup, 
 	defer resp.Body.Close()
 	wg.Done()
 	tFinish := time.Now()
-	*tmp = tFinish.Sub(tBegin)
+	mass = append(mass, tFinish.Sub(tBegin))
 
 }
 
@@ -40,22 +42,20 @@ func main() {
 	var wg sync.WaitGroup
 
 	t0 := time.Now()
-	var mass []time.Duration
-	var tmp time.Duration
 
 	wg.Add(count)
 	for i := 0; i < count; i++ {
-		go request(&countError, needTime, address, &wg, &tmp)
-		mass = append(mass, tmp)
+		go request(&countError, needTime, address, &wg)
+
 	}
+
 	wg.Wait()
 	timeFinish := time.Now()
 	tMin := mass[0]
 	tMax := mass[0]
-	for _, value := range mass {
-		fmt.Println(value)
-	}
+	var tAll time.Duration
 	for i := 0; i < len(mass); i++ {
+		tAll += mass[i]
 		if tMin > mass[i] {
 			tMin = mass[i]
 		}
@@ -63,8 +63,10 @@ func main() {
 			tMax = mass[i]
 		}
 	}
+	middle := tAll.Seconds() / float64(count)
 	fmt.Println("Время, за которое отработали все запросы ", timeFinish.Sub(t0))
 	fmt.Println("Кол-во ответов, которых не дождались", countError)
 	fmt.Println("Максимальное время на запрос", tMax)
 	fmt.Println("Минимальное время на запрос", tMin)
+	fmt.Println("Среднее время запроса", middle, "s")
 }
