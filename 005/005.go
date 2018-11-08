@@ -62,6 +62,7 @@ func main() {
 		if tMax < mass[i] {
 			tMax = mass[i]
 		}
+
 	}
 	middle := tAll.Seconds() / float64(count)
 	fmt.Println("Время, за которое отработали все запросы ", timeFinish.Sub(t0))
